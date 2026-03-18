@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sushi — Usability Test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F8F9FA;
+    color: #1C1C1E;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .screen { display: none; width: 100%; height: 100vh; }
+  .screen.active { display: flex; }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: clamp(13px, 1.4vw, 15px);
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: #1B6FEF; color: white; }
+  .btn-primary:hover { background: #1558C8; transform: translateY(-1px); }
+  .btn-secondary { background: #F2F2F7; color: #1C1C1E; }
+  .btn-secondary:hover { background: #E5E5EA; }
+  .btn-lg { padding: clamp(12px, 1.5vh, 16px) clamp(24px, 3vw, 36px); font-size: clamp(14px, 1.5vw, 17px); border-radius: 12px; }
+  .btn-block { width: 100%; }
+
+  .badge {
+    display: inline-block;
+    background: #EEF3FF;
+    color: #1B6FEF;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: clamp(11px, 1.1vw, 13px);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: clamp(16px, 2.5vh, 24px);
+  }
+
+  /* ===== FILE PROTOCOL WARNING ===== */
+  #file-protocol-banner {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 9999;
+    background: #FF6B35;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  #file-protocol-banner strong { font-weight: 700; }
+  #file-protocol-banner a { color: white; text-decoration: underline; }
+  body.has-banner { padding-top: 46px; }
+  body.has-banner .screen { height: calc(100vh - 46px); }
+
+  /* ===== WELCOME SCREEN ===== */
+  #welcome-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #FAFAFA;
+    padding: clamp(20px, 4vw, 40px);
+    overflow-y: auto;
+  }
+
+  .welcome-card {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(32px, 5vh, 52px) clamp(28px, 4vw, 48px);
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    border: 1px solid #F0F0F0;
+  }
+
+  .welcome-card h1 {
+    font-size: clamp(20px, 2.5vw, 26px);
+    font-weight: 700;
+    color: #1C1C1E;
+    margin-bottom: clamp(8px, 1.2vh, 12px);
+    line-height: 1.3;
+  }
+
+  .welcome-card > p {
+    font-size: clamp(13px, 1.4vw, 15px);
+    color: #6E6E73;
+    line-height: 1.6;
+    margin-bottom: clamp(18px, 2.5vh, 28px);
+  }
+
+  .instructions {
+    background: #F8F9FA;
+    border-radius: 12px;
+    padding: clamp(14px, 2vh, 20px);
+    margin-bottom: clamp(18px, 2.5vh, 28px);
+  }
+
+  .instructions h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8E8E93;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+
+  .instructions ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .instructions li {
+    font-size: clamp(12px, 1.3vw, 14px);
+    color: #3A3A3C;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+  }
+
+  .instructions li::before {
+    content: "→";
+    color: #1B6FEF;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .name-field { margin-bottom: clamp(16px, 2.5vh, 24px); }
+
+  .name-field label {
+    display: block;
+    font-size: clamp(12px, 1.3vw, 14px);
+    font-weight: 500;
+    color: #3A3A3C;
+    margin-bottom: 8px;
+  }
+
+  .name-field input {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1.5px solid #E5E5EA;
+    border-radius: 10px;
+    font-size: clamp(13px, 1.4vw, 15px);
+    color: #1C1C1E;
+    outline: none;
+    transition: border-color 0.15s;
+    background: white;
+  }
+
+  .name-field input:focus {
+    border-color: #1B6FEF;
+    box-shadow: 0 0 0 3px rgba(27,111,239,0.12);
+  }
+
+  /* Google Sheet test link */
+  .sheet-test-link {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #8E8E93;
+  }
+  .sheet-test-link a { color: #1B6FEF; text-decoration: none; }
+  .sheet-test-link a:hover { text-decoration: underline; }
+  .sheet-test-link.not-configured { color: #FF9500; }
+
+  /* ===== TASK INTRO SCREEN ===== */
+  #task-intro-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #FAFAFA;
+    padding: clamp(20px, 4vw, 40px);
+    overflow-y: auto;
+  }
+
+  .task-intro-card {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(28px, 4vh, 48px);
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    border: 1px solid #F0F0F0;
+    text-align: center;
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: clamp(18px, 2.5vh, 28px);
+  }
+
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E5E5EA;
+    transition: all 0.3s;
+  }
+
+  .progress-dot.completed { background: #34C759; }
+  .progress-dot.active { background: #1B6FEF; width: 24px; border-radius: 4px; }
+
+  .task-intro-card h2 {
+    font-size: clamp(17px, 2vw, 22px);
+    font-weight: 700;
+    color: #1C1C1E;
+    margin-bottom: clamp(8px, 1.2vh, 12px);
+    line-height: 1.4;
+  }
+
+  .task-tip {
+    font-size: clamp(12px, 1.3vw, 14px);
+    color: #8E8E93;
+    margin-bottom: clamp(20px, 3vh, 32px);
+    line-height: 1.5;
+  }
+
+  /* ===== TEST SCREEN — sidebar + embedded prototype ===== */
+  #test-screen {
+    flex-direction: row;
+    align-items: stretch;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Left sidebar — always visible */
+  #task-sidebar {
+    width: clamp(220px, 22vw, 300px);
+    flex-shrink: 0;
+    background: white;
+    border-right: 1px solid #E8EAED;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(18px, 2.5vh, 28px) clamp(16px, 1.8vw, 24px) clamp(16px, 2vh, 24px);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+    z-index: 10;
+    overflow-y: auto;
+  }
+
+  .sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: clamp(16px, 2vh, 24px);
+    flex-shrink: 0;
+  }
+
+  .sidebar-task-label {
+    font-size: clamp(10px, 1vw, 12px);
+    font-weight: 700;
+    color: #1B6FEF;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .sidebar-timer {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #F0F4FF;
+    border: 1px solid #D6E4FF;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: clamp(11px, 1.1vw, 13px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #1B6FEF;
+    flex-shrink: 0;
+  }
+
+  .sidebar-timer-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1B6FEF;
+    animation: pulse 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .sidebar-task-box {
+    background: #F0F4FF;
+    border: 1.5px solid #D6E4FF;
+    border-radius: 12px;
+    padding: clamp(12px, 1.5vh, 16px) clamp(12px, 1.4vw, 18px);
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-task-box-label {
+    font-size: clamp(9px, 0.9vw, 10px);
+    font-weight: 700;
+    color: #9AB5DF;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-task-text {
+    font-size: clamp(13px, 1.3vw, 15px);
+    font-weight: 600;
+    color: #1C1C1E;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .sidebar-hint {
+    font-size: clamp(11px, 1vw, 12px);
+    color: #B0B0B8;
+    line-height: 1.5;
+    text-align: center;
+    padding: 0 4px;
+    flex-shrink: 0;
+    margin-bottom: 14px;
+  }
+
+  .sidebar-spacer { flex: 1; min-height: 12px; }
+
+  .btn-stuck-sidebar {
+    width: 100%;
+    padding: clamp(10px, 1.4vh, 13px) 16px;
+    background: white;
+    color: #8E8E93;
+    border: 1.5px solid #E5E5EA;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: clamp(12px, 1.2vw, 14px);
+    font-weight: 500;
+    transition: all 0.15s;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .btn-stuck-sidebar:hover {
+    background: #FFF3E0;
+    border-color: #FFE0B2;
+    color: #BF5000;
+  }
+
+  /* Right: Figma iframe */
+  #figma-embed {
+    flex: 1;
+    border: none;
+    height: 100%;
+    display: block;
+  }
+
+  /* ===== RATING OVERLAY ===== */
+  #rating-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+    padding: clamp(20px, 4vw, 40px);
+    display: none;
+    overflow-y: auto;
+  }
+  #rating-screen.active { display: flex; }
+
+  .rating-card {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(28px, 4vh, 40px);
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    margin: auto;
+  }
+
+  .rating-task-ref {
+    font-size: 12px;
+    color: #8E8E93;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .rating-card h2 {
+    font-size: clamp(18px, 2vw, 22px);
+    font-weight: 700;
+    color: #1C1C1E;
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  .completion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: clamp(12px, 1.2vw, 13px);
+    font-weight: 500;
+    margin-bottom: clamp(16px, 2.5vh, 24px);
+  }
+  .completion-badge.done { background: #E8F5E9; color: #2E7D32; }
+  .completion-badge.stuck { background: #FFF3E0; color: #BF5000; }
+
+  .field-label {
+    font-size: clamp(13px, 1.3vw, 14px);
+    font-weight: 500;
+    color: #3A3A3C;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .seq-scale { display: flex; gap: 4px; margin-bottom: 6px; }
+  .seq-option { flex: 1; }
+  .seq-option input[type="radio"] { display: none; }
+  .seq-option label {
+    display: block;
+    width: 100%;
+    padding: clamp(7px, 1vh, 10px) 2px;
+    border-radius: 8px;
+    border: 1.5px solid #E5E5EA;
+    cursor: pointer;
+    text-align: center;
+    font-size: clamp(12px, 1.3vw, 14px);
+    font-weight: 600;
+    color: #6E6E73;
+    transition: all 0.12s;
+  }
+  .seq-option input[type="radio"]:checked + label {
+    background: #1B6FEF;
+    border-color: #1B6FEF;
+    color: white;
+    box-shadow: 0 2px 8px rgba(27,111,239,0.3);
+  }
+  .seq-option label:hover { border-color: #1B6FEF; color: #1B6FEF; }
+  .seq-option input[type="radio"]:checked + label:hover { color: white; }
+
+  .seq-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #8E8E93;
+    margin-bottom: clamp(16px, 2.5vh, 22px);
+    padding: 0 2px;
+  }
+
+  .notes-textarea, .survey-textarea {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1.5px solid #E5E5EA;
+    border-radius: 10px;
+    font-size: clamp(13px, 1.3vw, 14px);
+    color: #1C1C1E;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+    outline: none;
+    margin-bottom: clamp(16px, 2.5vh, 22px);
+    transition: border-color 0.15s;
+    background: white;
+  }
+  .notes-textarea { min-height: 70px; }
+  .survey-textarea { min-height: 80px; margin-bottom: 18px; }
+  .notes-textarea:focus, .survey-textarea:focus {
+    border-color: #1B6FEF;
+    box-shadow: 0 0 0 3px rgba(27,111,239,0.1);
+  }
+
+  /* ===== SURVEY SCREEN ===== */
+  #survey-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: #FAFAFA;
+    padding: clamp(20px, 4vw, 40px);
+    overflow-y: auto;
+  }
+
+  .survey-card {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(28px, 4vh, 48px);
+    max-width: 580px;
+    width: 100%;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    border: 1px solid #F0F0F0;
+    margin: auto;
+  }
+
+  .survey-card h2 { font-size: clamp(20px, 2.5vw, 26px); font-weight: 700; color: #1C1C1E; margin-bottom: 6px; }
+
+  .survey-subtitle {
+    color: #6E6E73;
+    font-size: clamp(13px, 1.4vw, 15px);
+    margin-bottom: clamp(20px, 3vh, 32px);
+    line-height: 1.5;
+  }
+
+  .form-group { margin-bottom: clamp(18px, 2.5vh, 24px); }
+  .form-group label { display: block; font-size: clamp(13px, 1.4vw, 15px); font-weight: 500; color: #1C1C1E; margin-bottom: 10px; }
+
+  .ease-scale { display: flex; gap: 4px; margin-bottom: 6px; }
+  .ease-option { flex: 1; }
+  .ease-option input[type="radio"] { display: none; }
+  .ease-option label {
+    display: block; width: 100%; padding: clamp(7px, 1vh, 10px) 2px; border-radius: 8px; border: 1.5px solid #E5E5EA;
+    cursor: pointer; text-align: center; font-size: clamp(12px, 1.3vw, 14px); font-weight: 600; color: #6E6E73; transition: all 0.12s;
+  }
+  .ease-option input[type="radio"]:checked + label { background: #1B6FEF; border-color: #1B6FEF; color: white; box-shadow: 0 2px 8px rgba(27,111,239,0.3); }
+  .ease-option label:hover { border-color: #1B6FEF; color: #1B6FEF; }
+  .ease-option input[type="radio"]:checked + label:hover { color: white; }
+
+  .scale-ends { display: flex; justify-content: space-between; font-size: 11px; color: #8E8E93; margin-bottom: clamp(16px, 2.5vh, 22px); padding: 0 2px; }
+
+  /* ===== END SCREEN ===== */
+  #end-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #FAFAFA;
+    padding: clamp(20px, 4vw, 40px);
+    overflow-y: auto;
+  }
+
+  .end-card {
+    background: white;
+    border-radius: 20px;
+    padding: clamp(32px, 5vh, 52px) clamp(28px, 4vw, 48px);
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    border: 1px solid #F0F0F0;
+    text-align: center;
+  }
+
+  .end-icon { font-size: clamp(36px, 6vh, 52px); margin-bottom: clamp(12px, 2vh, 20px); display: block; }
+  .end-card h2 { font-size: clamp(20px, 2.5vw, 26px); font-weight: 700; color: #1C1C1E; margin-bottom: 10px; }
+  .end-card p { color: #6E6E73; font-size: clamp(13px, 1.4vw, 15px); line-height: 1.6; margin-bottom: clamp(18px, 2.5vh, 28px); }
+
+  .end-status {
+    border-radius: 12px;
+    padding: clamp(12px, 2vh, 16px) 20px;
+    margin-bottom: clamp(16px, 2.5vh, 24px);
+    font-size: clamp(13px, 1.3vw, 14px);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .end-status.success { background: #E8F5E9; border: 1px solid #C8E6C9; color: #2E7D32; }
+  .end-status.warning { background: #FFF3E0; border: 1px solid #FFE0B2; color: #BF5000; }
+</style>
+</head>
+<body>
+
+<!-- File:// protocol warning — shown automatically if opened from desktop -->
+<div id="file-protocol-banner">
+  ⚠ <strong>Hosted locally — prototype auto-detection is disabled.</strong>
+  Upload to your HTTPS host (e.g. Cloudflare Pages) before sharing with participants.
+</div>
+
+<!-- ===================== WELCOME SCREEN ===================== -->
+<div class="screen active" id="welcome-screen">
+  <div class="welcome-card">
+    <div class="badge">Usability Test</div>
+    <h1>Welcome, and thanks for your time! 👋</h1>
+    <p>You'll be asked to complete a few tasks using a prototype. There are no right or wrong answers — we're testing the design, not you. Take your time and think out loud if you can.</p>
+
+    <div class="instructions">
+      <h3>Before you start</h3>
+      <ul>
+        <li>Tasks will appear one at a time with the prototype on the right</li>
+        <li>The task completes automatically when you reach the end of the flow</li>
+        <li>If you get stuck at any point, press "I got stuck" to continue</li>
+        <li>Your honest reactions help us make the product better</li>
+      </ul>
+    </div>
+
+    <div class="name-field">
+      <label for="participant-name">Your name (optional)</label>
+      <input type="text" id="participant-name" placeholder="e.g. Alex" />
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" onclick="startTest()">Start test →</button>
+  </div>
+</div>
+
+<!-- ===================== TASK INTRO SCREEN ===================== -->
+<div class="screen" id="task-intro-screen">
+  <div class="task-intro-card">
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="badge" id="task-number-label">Task 1 of 4</div>
+    <h2 id="task-intro-text"></h2>
+    <p class="task-tip">Take your time. Think out loud if you can — there are no wrong moves.</p>
+    <button class="btn btn-primary btn-lg" onclick="beginTask()" style="min-width: 200px;">Begin task →</button>
+  </div>
+</div>
+
+<!-- ===================== TEST SCREEN — sidebar + prototype ===================== -->
+<div class="screen" id="test-screen">
+
+  <!-- Left sidebar: always visible -->
+  <div id="task-sidebar">
+    <div class="sidebar-top">
+      <span class="sidebar-task-label" id="sidebar-task-label">Task 1 of 4</span>
+      <div class="sidebar-timer">
+        <span class="sidebar-timer-dot"></span>
+        <span id="sidebar-timer">0:00</span>
+      </div>
+    </div>
+
+    <div class="sidebar-task-box">
+      <div class="sidebar-task-box-label">Your task</div>
+      <p class="sidebar-task-text" id="sidebar-task-text"></p>
+    </div>
+
+    <p class="sidebar-hint">Complete the task in the prototype → it will move on automatically.</p>
+
+    <div class="sidebar-spacer"></div>
+
+    <button class="btn-stuck-sidebar" onclick="completeTask(false)">I got stuck</button>
+  </div>
+
+  <!-- Right: Figma prototype embedded -->
+  <iframe id="figma-embed" src="" allowfullscreen></iframe>
+
+</div>
+
+<!-- ===================== RATING OVERLAY ===================== -->
+<div id="rating-screen">
+  <div class="rating-card">
+    <div class="rating-task-ref" id="rating-task-ref">Task 1 of 4</div>
+    <h2>How was that task?</h2>
+    <div class="completion-badge" id="completion-badge"></div>
+
+    <label class="field-label">How difficult was this task to complete?</label>
+    <div class="seq-scale">
+      <div class="seq-option"><input type="radio" name="seq" id="seq1" value="1"><label for="seq1">1</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq2" value="2"><label for="seq2">2</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq3" value="3"><label for="seq3">3</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq4" value="4"><label for="seq4">4</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq5" value="5"><label for="seq5">5</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq6" value="6"><label for="seq6">6</label></div>
+      <div class="seq-option"><input type="radio" name="seq" id="seq7" value="7"><label for="seq7">7</label></div>
+    </div>
+    <div class="seq-ends"><span>Very difficult</span><span>Very easy</span></div>
+
+    <label class="field-label" for="task-notes">Notes or observations (optional)</label>
+    <textarea class="notes-textarea" id="task-notes" placeholder="e.g. I wasn't sure where to click, the filter option was hard to find..."></textarea>
+
+    <button class="btn btn-primary btn-block" id="next-task-btn" onclick="nextTask()">Next task →</button>
+    <button class="btn btn-secondary btn-block" id="skip-task-btn" onclick="skipTask()" style="margin-top:8px; display:none;">Skip feedback and continue →</button>
+  </div>
+</div>
+
+<!-- ===================== SURVEY SCREEN ===================== -->
+<div class="screen" id="survey-screen">
+  <div class="survey-card">
+    <div class="badge" style="margin-bottom:20px;">Almost done!</div>
+    <h2>Final questions</h2>
+    <p class="survey-subtitle">A few quick questions about your overall experience.</p>
+
+    <div class="form-group">
+      <label>Overall, how easy was this product to use?</label>
+      <div class="ease-scale">
+        <div class="ease-option"><input type="radio" name="ease" id="e1" value="1"><label for="e1">1</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e2" value="2"><label for="e2">2</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e3" value="3"><label for="e3">3</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e4" value="4"><label for="e4">4</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e5" value="5"><label for="e5">5</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e6" value="6"><label for="e6">6</label></div>
+        <div class="ease-option"><input type="radio" name="ease" id="e7" value="7"><label for="e7">7</label></div>
+      </div>
+      <div class="scale-ends"><span>Very difficult</span><span>Very easy</span></div>
+    </div>
+
+    <div class="form-group">
+      <label for="survey-positive">What worked well? What felt easy or intuitive?</label>
+      <textarea class="survey-textarea" id="survey-positive" placeholder="e.g. The navigation felt clear, I liked how..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="survey-negative">What was frustrating, confusing, or unclear?</label>
+      <textarea class="survey-textarea" id="survey-negative" placeholder="e.g. I struggled to find the filter, I wasn't sure if..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="survey-other">Any other thoughts?</label>
+      <textarea class="survey-textarea" id="survey-other" style="margin-bottom:28px;" placeholder="Anything else you'd like to share..."></textarea>
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" onclick="finishTest()">Finish →</button>
+  </div>
+</div>
+
+<!-- ===================== END SCREEN ===================== -->
+<div class="screen" id="end-screen">
+  <div class="end-card">
+    <span class="end-icon">🎉</span>
+    <h2>You're all done!</h2>
+    <p>Thank you so much for your time. Your feedback is incredibly valuable and will help us improve the product.</p>
+
+    <div class="end-status success" id="end-status">
+      ✓ Your results have been saved automatically.
+    </div>
+
+    <button class="btn btn-secondary btn-block" onclick="downloadBackup()" style="margin-bottom:10px;">Save a local backup</button>
+    <button class="btn btn-secondary btn-block" onclick="showScreen('welcome-screen')">Run another session</button>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+// Generated by the usability-test skill. Run the skill again to create a new test.
+
+const TEST_NAME = "Sushi";
+
+// Google Apps Script web app URL.
+// Paste the URL after deploying your Apps Script as a web app.
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbypB4zdEsxwocEWMfSNJ3Y0FrMFkyXljVyozv4CWGQOOX7GQqwOsrlZIkpItfESPia1Rg/exec";
+
+// The exact name of the last frame in every linked Figma prototype.
+// Rename that frame to "End" (capital E) in Figma before testing.
+const FIGMA_END_FRAME_NAME = "End";
+
+// Tasks: each has a description and its own Figma prototype URL.
+const TASKS = [
+  {
+    description: "Press the blue button and than the toggle",
+    figmaUrl: "https://www.figma.com/proto/kZvnUEsi26KnhyrQEOKN0S/Gianna-Playground?page-id=180%3A10101&node-id=180-10102&p=f&viewport=25%2C231%2C0.23&t=HvkDsx5Sn354VuDt-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=180%3A10102"
+  },
+  {
+    description: "Is sushi overrated? (This si the question)",
+    figmaUrl: "https://www.figma.com/proto/kZvnUEsi26KnhyrQEOKN0S/Gianna-Playground?page-id=184%3A119&node-id=184-120&p=f&viewport=25%2C297%2C0.34&t=wOHdl3pyThacEB3n-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=184%3A120"
+  }
+];
+
+// ===================== INIT =====================
+(function init() {
+  // Warn when opened from the desktop (file://) — Figma auto-detection won't work
+  if (window.location.protocol === "file:") {
+    const banner = document.getElementById("file-protocol-banner");
+    banner.style.display = "block";
+    document.body.classList.add("has-banner");
+  }
+})();
+
+// ===================== STATE =====================
+let state = {};
+
+function resetState() {
+  state = {
+    participantName: "",
+    currentTaskIndex: 0,
+    taskStartTime: null,
+    timerInterval: null,
+    tempElapsed: 0,
+    tempCompleted: false,
+    figmaMessageHandler: null,
+    results: {
+      participant: "",
+      testName: TEST_NAME,
+      date: new Date().toISOString().split("T")[0],
+      tasks: [],
+      survey: {}
+    }
+  };
+}
+
+resetState();
+
+// ===================== SCREEN MANAGEMENT =====================
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => {
+    s.classList.remove("active");
+    s.style.display = "";
+  });
+  const screen = document.getElementById(id);
+  screen.classList.add("active");
+  screen.style.display = "flex";
+}
+
+// ===================== WELCOME =====================
+function startTest() {
+  resetState();
+  state.participantName = document.getElementById("participant-name").value.trim() || "Anonymous";
+  state.results.participant = state.participantName;
+  state.results.date = new Date().toISOString().split("T")[0];
+  showTaskIntro();
+}
+
+// ===================== PROGRESS DOTS =====================
+function updateProgressDots() {
+  const container = document.getElementById("progress-dots");
+  container.innerHTML = "";
+  TASKS.forEach((_, i) => {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot";
+    if (i < state.currentTaskIndex) dot.classList.add("completed");
+    else if (i === state.currentTaskIndex) dot.classList.add("active");
+    container.appendChild(dot);
+  });
+}
+
+// ===================== TASK INTRO =====================
+function showTaskIntro() {
+  updateProgressDots();
+  const n = state.currentTaskIndex + 1;
+  const total = TASKS.length;
+  document.getElementById("task-number-label").textContent = `Task ${n} of ${total}`;
+  document.getElementById("task-intro-text").textContent = TASKS[state.currentTaskIndex].description;
+  showScreen("task-intro-screen");
+}
+
+// ===================== BEGIN TASK =====================
+function beginTask() {
+  const task = TASKS[state.currentTaskIndex];
+  const n = state.currentTaskIndex + 1;
+  const total = TASKS.length;
+
+  document.getElementById("sidebar-task-label").textContent = `Task ${n} of ${total}`;
+  document.getElementById("sidebar-task-text").textContent = task.description;
+
+  // Each task loads its own Figma prototype
+  const embedUrl = "https://www.figma.com/embed?embed_host=share&url=" + encodeURIComponent(task.figmaUrl);
+  document.getElementById("figma-embed").src = embedUrl;
+
+  showScreen("test-screen");
+  setupFigmaDetection();
+
+  state.taskStartTime = Date.now();
+  clearInterval(state.timerInterval);
+  document.getElementById("sidebar-timer").textContent = "0:00";
+  state.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.taskStartTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    document.getElementById("sidebar-timer").textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+  }, 1000);
+}
+
+// ===================== FIGMA END-FRAME DETECTION =====================
+// Listens for Figma's postMessages. When the participant reaches a frame
+// named "End", the task completes automatically.
+//
+// IMPORTANT: This only works when the page is served over HTTPS.
+// Upload to Netlify (or any HTTPS host) before sharing with participants.
+// Opening the HTML file directly from your desktop will NOT trigger this.
+//
+// HOW IT WORKS: Figma sends a PRESENTED_DESIGN_PAGE_CHANGED message every
+// time the prototype navigates to a new frame. We check if that frame's
+// name matches FIGMA_END_FRAME_NAME ("End").
+function setupFigmaDetection() {
+  if (state.figmaMessageHandler) {
+    window.removeEventListener("message", state.figmaMessageHandler);
+  }
+
+  state.figmaMessageHandler = (event) => {
+    if (!event.data) return;
+
+    // Always log to console — open DevTools (F12) to see raw Figma messages
+    const raw = typeof event.data === "string"
+      ? event.data
+      : JSON.stringify(event.data);
+    console.log("[Figma msg]", raw.slice(0, 400));
+
+    // Strategy 1: Parse the JSON and check the exact structure Figma uses
+    try {
+      const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+
+      // Primary: PRESENTED_DESIGN_PAGE_CHANGED → data.currentPage.name
+      if (msg?.data?.currentPage?.name === FIGMA_END_FRAME_NAME) {
+        console.log("[Figma] ✅ End frame detected via currentPage.name");
+        triggerTaskComplete();
+        return;
+      }
+      // Alternate path some Figma versions use
+      if (msg?.currentPage?.name === FIGMA_END_FRAME_NAME) {
+        console.log("[Figma] ✅ End frame detected via alternate path");
+        triggerTaskComplete();
+        return;
+      }
+      // Check pageName field used by some embed versions
+      if (msg?.data?.pageName === FIGMA_END_FRAME_NAME || msg?.pageName === FIGMA_END_FRAME_NAME) {
+        console.log("[Figma] ✅ End frame detected via pageName");
+        triggerTaskComplete();
+        return;
+      }
+    } catch (e) {
+      // Not valid JSON — fall through to raw string check
+    }
+
+    // Strategy 2: Raw string search as fallback
+    // Matches "End" as a JSON string value, avoiding partial matches like "Endpoint"
+    const namePattern = new RegExp(`"name"\\s*:\\s*"${FIGMA_END_FRAME_NAME}"`);
+    if (namePattern.test(raw)) {
+      console.log("[Figma] ✅ End frame detected via raw string pattern");
+      triggerTaskComplete();
+      return;
+    }
+  };
+
+  window.addEventListener("message", state.figmaMessageHandler);
+}
+
+function triggerTaskComplete() {
+  window.removeEventListener("message", state.figmaMessageHandler);
+  state.figmaMessageHandler = null;
+  completeTask(true);
+}
+
+// ===================== COMPLETE TASK =====================
+function completeTask(completed) {
+  clearInterval(state.timerInterval);
+  if (state.figmaMessageHandler) {
+    window.removeEventListener("message", state.figmaMessageHandler);
+    state.figmaMessageHandler = null;
+  }
+  state.tempElapsed = Math.floor((Date.now() - state.taskStartTime) / 1000);
+  state.tempCompleted = completed;
+
+  document.querySelectorAll("input[name='seq']").forEach(r => r.checked = false);
+  document.getElementById("task-notes").value = "";
+
+  const n = state.currentTaskIndex + 1;
+  const total = TASKS.length;
+  document.getElementById("rating-task-ref").textContent = `Task ${n} of ${total}`;
+
+  const badge = document.getElementById("completion-badge");
+  badge.textContent = completed ? "✓ Task completed" : "✗ Got stuck";
+  badge.className = `completion-badge ${completed ? "done" : "stuck"}`;
+
+  const isLast = state.currentTaskIndex === TASKS.length - 1;
+  document.getElementById("next-task-btn").textContent = isLast ? "Continue to final questions →" : "Next task →";
+
+  // Skip button only available when stuck (not required to rate)
+  document.getElementById("skip-task-btn").style.display = completed ? "none" : "block";
+
+  document.getElementById("rating-screen").classList.add("active");
+  document.getElementById("rating-screen").style.display = "flex";
+}
+
+// ===================== NEXT TASK =====================
+function nextTask() {
+  const seqValue = document.querySelector("input[name='seq']:checked")?.value || null;
+  const notes = document.getElementById("task-notes").value.trim();
+
+  state.results.tasks.push({
+    taskNumber: state.currentTaskIndex + 1,
+    taskDescription: TASKS[state.currentTaskIndex].description,
+    completed: state.tempCompleted,
+    timeSeconds: state.tempElapsed,
+    difficultyRating: seqValue ? parseInt(seqValue) : null,
+    difficultyLabel: seqValue ? getDifficultyLabel(parseInt(seqValue)) : null,
+    notes: notes
+  });
+
+  document.getElementById("rating-screen").classList.remove("active");
+  document.getElementById("rating-screen").style.display = "none";
+
+  state.currentTaskIndex++;
+
+  if (state.currentTaskIndex < TASKS.length) {
+    showTaskIntro();
+  } else {
+    showScreen("survey-screen");
+  }
+}
+
+// ===================== SKIP TASK (stuck only) =====================
+function skipTask() {
+  state.results.tasks.push({
+    taskNumber: state.currentTaskIndex + 1,
+    taskDescription: TASKS[state.currentTaskIndex].description,
+    completed: false,
+    skipped: true,
+    timeSeconds: state.tempElapsed,
+    difficultyRating: null,
+    difficultyLabel: null,
+    notes: document.getElementById("task-notes").value.trim() || "(skipped)"
+  });
+
+  document.getElementById("rating-screen").classList.remove("active");
+  document.getElementById("rating-screen").style.display = "none";
+
+  state.currentTaskIndex++;
+  if (state.currentTaskIndex < TASKS.length) {
+    showTaskIntro();
+  } else {
+    showScreen("survey-screen");
+  }
+}
+
+function getDifficultyLabel(val) {
+  return {1:"Very difficult",2:"Quite difficult",3:"Somewhat difficult",4:"Neutral",5:"Somewhat easy",6:"Quite easy",7:"Very easy"}[val] || "";
+}
+
+// ===================== FINISH TEST =====================
+function finishTest() {
+  const easeVal = document.querySelector("input[name='ease']:checked")?.value || null;
+  state.results.survey = {
+    overallEaseRating: easeVal ? parseInt(easeVal) : null,
+    overallEaseLabel: easeVal ? getDifficultyLabel(parseInt(easeVal)) : null,
+    whatWorkedWell: document.getElementById("survey-positive").value.trim(),
+    whatWasFrustrating: document.getElementById("survey-negative").value.trim(),
+    otherFeedback: document.getElementById("survey-other").value.trim()
+  };
+
+  showScreen("end-screen");
+  sendToGoogleSheets();
+}
+
+// ===================== SEND TO GOOGLE SHEETS =====================
+// Uses text/plain content-type so the request is treated as a "simple"
+// cross-origin request — no preflight needed, no CORS errors.
+// The Apps Script reads the body via e.postData.contents regardless of type.
+async function sendToGoogleSheets() {
+  const statusEl = document.getElementById("end-status");
+
+  if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
+    statusEl.className = "end-status warning";
+    statusEl.textContent = "⚠ Google Sheet not configured. Use the backup button below.";
+    return;
+  }
+
+  statusEl.className = "end-status";
+  statusEl.style.cssText = "background:#F8F9FA;border:1px solid #E5E5EA;color:#6E6E73;";
+  statusEl.textContent = "⏳ Saving your results...";
+
+  try {
+    // Send as text/plain — avoids CORS preflight while still sending the JSON body
+    await fetch(GOOGLE_SHEET_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(state.results)
+    });
+
+    statusEl.className = "end-status success";
+    statusEl.style.cssText = "";
+    statusEl.textContent = "✓ Your results have been saved. You can close this window.";
+  } catch (err) {
+    console.error("Google Sheets error:", err);
+    statusEl.className = "end-status warning";
+    statusEl.style.cssText = "";
+    statusEl.textContent = "⚠ Couldn't reach Google Sheets. Use the backup button below.";
+  }
+}
+
+// ===================== BACKUP DOWNLOAD =====================
+function downloadBackup() {
+  const data = JSON.stringify(state.results, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeName = state.results.participant.replace(/\s+/g, "-").toLowerCase();
+  a.href = url;
+  a.download = `usability-test-${safeName}-${state.results.date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
